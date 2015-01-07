@@ -136,6 +136,10 @@ class Ffmpeg < Formula
 
     ENV["GIT_DIR"] = cached_download/".git" if build.head?
 
+    if MacOS.version < :mountain_lion
+      system "perl", *["-pi", "-e", "s/-framework CoreGraphics/-framework ApplicationServices/", "configure"]
+    end
+
     system "./configure", *args
 
     if MacOS.prefer_64_bit?
