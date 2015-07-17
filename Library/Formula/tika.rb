@@ -1,13 +1,14 @@
 require 'formula'
 
 class Tika < Formula
-  homepage 'http://tika.apache.org/'
-  url 'http://www.apache.org/dyn/closer.cgi?path=tika/tika-app-1.6.jar'
-  sha1 '99df0d8c3f6a2be498d275053e611fb5afdf0a9d'
+  desc "Content analysis toolkit"
+  homepage 'https://tika.apache.org/'
+  url 'https://www.apache.org/dyn/closer.cgi?path=tika/tika-app-1.9.jar'
+  sha256 'b67bb2d3979517c5e1f43e865e8ba8f55a70dcce20fae7d4c4437c5906181fc8'
 
   resource 'server' do
-    url 'http://repo1.maven.org/maven2/org/apache/tika/tika-server/1.6/tika-server-1.6.jar'
-    sha1 '0e4a9fc0394b5a99b214423b6868d8eb6b0df7b0'
+    url 'https://repo1.maven.org/maven2/org/apache/tika/tika-server/1.9/tika-server-1.9.jar'
+    sha256 'ae20919b4ab150613bf5c1037031aef0920c0755fff96523e3ed3ccbc89ca7c6'
   end
 
   def install

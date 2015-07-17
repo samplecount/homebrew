@@ -1,11 +1,16 @@
 class Syncthing < Formula
-  homepage "http://syncthing.net"
-  url "https://github.com/syncthing/syncthing.git", :tag => "v0.10.13"
+  desc "Open source continuous file synchronization application"
+  homepage "https://syncthing.net/"
+  url "https://github.com/syncthing/syncthing.git",
+    :tag => "v0.11.15", :revision => "909d60464e9be25295894df686528311e826391f"
+
+  head "https://github.com/syncthing/syncthing.git"
 
   bottle do
-    sha1 "4cb5aea8a9c063700498a7144d192e085010cc4e" => :yosemite
-    sha1 "bf05daef2e9ae5c7de424a3a6f33e28e898f6a31" => :mavericks
-    sha1 "a17f9c4942a53ff713455bf60df167060063c021" => :mountain_lion
+    cellar :any
+    sha256 "4e2245685f855ef72a1b57d65abec2c2bb3bed1cb0c7825bdfd2870445481542" => :yosemite
+    sha256 "4ad9522582ac69f460d112790177bfa09ef25ab8d5bc5b66b419ecd837d0bfee" => :mavericks
+    sha256 "41b64457f5a1e068bad2edd6157dacee055483f729dc91c282f4c723e688079e" => :mountain_lion
   end
 
   depends_on "go" => :build
@@ -15,12 +20,11 @@ class Syncthing < Formula
     ENV["GOPATH"] = cached_download/".gopath"
     ENV.append_path "PATH", "#{ENV["GOPATH"]}/bin"
 
-    # FIXME do this without mutating the cache!
+    # FIXTHIS: do this without mutating the cache!
     hack_dir = cached_download/".gopath/src/github.com/syncthing"
-    rm_rf  hack_dir
+    rm_rf hack_dir
     mkdir_p hack_dir
     ln_s cached_download, "#{hack_dir}/syncthing"
-    ENV["GIT_DIR"] = cached_download/".git"
 
     system "./build.sh", "noupgrade"
     bin.install "syncthing"
@@ -31,28 +35,33 @@ class Syncthing < Formula
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <plist version="1.0">
       <dict>
-        <key>EnvironmentVariables</key>
-        <dict>
-          <key>STNORESTART</key>
-          <string>yes</string>
-        </dict>
-        <key>KeepAlive</key>
-        <true/>
         <key>Label</key>
         <string>#{plist_name}</string>
         <key>ProgramArguments</key>
         <array>
           <string>#{opt_bin}/syncthing</string>
           <string>-no-browser</string>
+          <string>-no-restart</string>
         </array>
-        <key>RunAtLoad</key>
-        <true/>
+        <key>KeepAlive</key>
+        <dict>
+          <key>Crashed</key>
+          <true/>
+          <key>SuccessfulExit</key>
+          <false/>
+        </dict>
+        <key>ProcessType</key>
+        <string>Background</string>
+        <key>StandardErrorPath</key>
+        <string>#{var}/log/syncthing.log</string>
+        <key>StandardOutPath</key>
+        <string>#{var}/log/syncthing.log</string>
       </dict>
     </plist>
     EOS
   end
 
   test do
-    system "#{bin}/syncthing", "-generate", "./"
+    system bin/"syncthing", "-generate", "./"
   end
 end

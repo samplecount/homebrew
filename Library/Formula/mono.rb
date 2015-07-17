@@ -1,23 +1,31 @@
-require "formula"
-
 class Mono < Formula
+  desc "Cross platform, open source .NET development framework"
   homepage "http://www.mono-project.com/"
-  url "http://download.mono-project.com/sources/mono/mono-3.10.0.tar.bz2"
-  sha1 "74e43604ea48e941c39a43ebc153abee4ddba56c"
+  url "http://download.mono-project.com/sources/mono/mono-4.0.2.5.tar.bz2"
+  sha256 "b074584eea5bbaaf29362486a69d70abe53d0d2feb334f231fa9c841cf6fd651"
 
   # xbuild requires the .exe files inside the runtime directories to
   # be executable
   skip_clean "lib/mono"
 
   bottle do
-    sha1 "b30c33f4fee61ab76bbd66fd482a6fb389b58dd3" => :yosemite
-    sha1 "fa0b56a4cfa2e48dc1c71573ced4c08c835e19cd" => :mavericks
-    sha1 "2b1b55b8a8b9e0825538a64722234ddd84e72ee2" => :mountain_lion
+    revision 1
+    sha256 "58a84b443f8cf3eac731d87ce8d484fec90ddf43b44b51854a6186d11b53daee" => :yosemite
+    sha256 "7bb30673b0de1d41980da3527f55db7e453da66b0673a5a5c93c464426716db8" => :mavericks
+    sha256 "3a3c35b4bdafc31607fabedece5caa8200ed1deca321bfaeca3869560d6e3d0e" => :mountain_lion
+  end
+
+  # Fix compile and runtime error on OS X 10.11 Beta 3
+  # https://github.com/mono/mono/pull/1919
+  # https://bugzilla.xamarin.com/show_bug.cgi?id=31761
+  patch do
+    url "https://github.com/mono/mono/pull/1919.diff"
+    sha256 "53c39c2145027fdf1a2233e12bd96da2c1164e1422e631cdb50598910b39a020"
   end
 
   resource "monolite" do
-    url "http://storage.bos.xamarin.com/mono-dist-master/latest/monolite-111-latest.tar.gz"
-    sha1 "af90068351895082f03fdaf2840b7539e23e3f32"
+    url "http://storage.bos.xamarin.com/mono-dist-4.0.0-release/c1/c1b37f29b1a439acf7ef42a384550ab1dca5295a/monolite-117-latest.tar.gz"
+    sha256 "a3bd1c826186e4896193ad1f909bf8756f66f62d1e249fe301b10bc80ebe0795"
   end
 
   def install
@@ -27,8 +35,11 @@ class Mono < Formula
 
     args = %W[
       --prefix=#{prefix}
+      --disable-dependency-tracking
+      --disable-silent-rules
       --enable-nls=no
     ]
+
     args << "--build=" + (MacOS.prefer_64_bit? ? "x86_64": "i686") + "-apple-darwin"
 
     system "./configure", *args
@@ -42,8 +53,7 @@ class Mono < Formula
   test do
     test_str = "Hello Homebrew"
     test_name = "hello.cs"
-    hello = testpath/test_name
-    hello.write <<-EOS.undent
+    (testpath/test_name).write <<-EOS.undent
       public class Hello1
       {
          public static void Main()
@@ -52,19 +62,17 @@ class Mono < Formula
          }
       }
     EOS
-    `#{bin}/mcs #{hello}`
-    assert $?.success?
-    output = `#{bin}/mono hello.exe`
-    assert $?.success?
-    assert_equal test_str, output.strip
+    shell_output "#{bin}/mcs #{test_name}"
+    output = shell_output "#{bin}/mono hello.exe"
+    assert_match test_str, output.strip
 
     # Tests that xbuild is able to execute lib/mono/*/mcs.exe
-    xbuild = testpath/"test.csproj"
-    xbuild.write <<-EOS.undent
+    (testpath/"test.csproj").write <<-EOS.undent
       <?xml version="1.0" encoding="utf-8"?>
       <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
         <PropertyGroup>
           <AssemblyName>HomebrewMonoTest</AssemblyName>
+          <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
         </PropertyGroup>
         <ItemGroup>
           <Compile Include="#{test_name}" />
@@ -72,8 +80,7 @@ class Mono < Formula
         <Import Project="$(MSBuildBinPath)\\Microsoft.CSharp.targets" />
       </Project>
     EOS
-    system "#{bin}/xbuild", xbuild
-    assert $?.success?
+    shell_output "#{bin}/xbuild test.csproj"
   end
 
   def caveats; <<-EOS.undent

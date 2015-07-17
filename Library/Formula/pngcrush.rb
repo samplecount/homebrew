@@ -1,19 +1,19 @@
-require "formula"
-
 class Pngcrush < Formula
+  desc "Optimizer for PNG files"
   homepage "http://pmt.sourceforge.net/pngcrush/"
-  url "https://downloads.sourceforge.net/project/pmt/pngcrush/1.7.81/pngcrush-1.7.81.tar.gz"
-  sha1 "c5f4c2aeb7b15b8bb49df7e66d7c1a7843cb39f8"
+  url "https://downloads.sourceforge.net/project/pmt/pngcrush/1.7.85/pngcrush-1.7.85.tar.gz"
+  sha1 "df48feff10720403dbc52883c5b6228951743c21"
 
   bottle do
     cellar :any
-    sha1 "53f7387c74770525785c8c8db39ce68eaf0d8a27" => :yosemite
-    sha1 "293bcf3d61802bb66c3d89f0ab43f320668c0c2b" => :mavericks
-    sha1 "5a0151c3adfb20300a85702189a87cfd8ae5a411" => :mountain_lion
+    sha256 "9f851839d271eaf8b187b03cece732cf7f0df2ed5ec3d0459cf1ffbbadebf390" => :yosemite
+    sha256 "8d538283858ed3448775ac27c309093bdb13e42eef7b3d60fb1904d6d0c02f0c" => :mavericks
+    sha256 "7b582ec740c86f3fb2829cdaa9b9cf9ba7941186d1b55458387ae2db3f9b1e8c" => :mountain_lion
   end
 
   def install
-    # Required to enable "-cc" (color counting) option (disabled by default since 1.5.1)
+    # Required to enable "-cc" (color counting) option (disabled by default
+    # since 1.5.1)
     ENV.append_to_cflags "-DPNGCRUSH_COUNT_COLORS"
 
     system "make", "CC=#{ENV.cc}",

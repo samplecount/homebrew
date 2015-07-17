@@ -1,17 +1,15 @@
-require "formula"
-
 class Pngquant < Formula
-  homepage "http://pngquant.org/"
-  url "https://github.com/pornel/pngquant/archive/2.3.1.tar.gz"
-  sha1 "964987f24012b247be666903ab4e31f53d84d80c"
-
+  desc "PNG image optimizing utility"
+  homepage "https://pngquant.org/"
+  url "https://pngquant.org/pngquant-2.5.0-src.tar.bz2"
+  sha256 "83c941f9fc7d4d6a566ca1243bff38fc9c46e4c74b6dc352fb5eac68b2297839"
   head "https://github.com/pornel/pngquant.git"
 
   bottle do
     cellar :any
-    sha1 "4c4b52ecd2d0c6e02e6086717277eca258e96239" => :yosemite
-    sha1 "73d1b4d1addd90e6c00497ff9403f97b0f6bc855" => :mavericks
-    sha1 "5a8b9d3200c479ed3cf7ee0af43dc127c848eacc" => :mountain_lion
+    sha256 "35d5b9ee2b42ba45baa378fed42e69cf2dfb74f04eaf8b7286426a314ab23a4e" => :yosemite
+    sha256 "152ba12f6637125935f2f3bbcdfeb0f056f20ada21931859f1507cb6f9ebf417" => :mavericks
+    sha256 "39f9bb7d8b6289bfdb8809a3bd48af52a3760ab268e98f1a8fa89078dd4c050e" => :mountain_lion
   end
 
   depends_on "pkg-config" => :build
@@ -19,12 +17,13 @@ class Pngquant < Formula
 
   def install
     ENV.append_to_cflags "-DNDEBUG" # Turn off debug
-    system "make", "PREFIX=#{prefix}", "CC=#{ENV.cc}"
-    bin.install "pngquant"
+    system "make", "install",
+           "PREFIX=#{prefix}", "CC=#{ENV.cc}"
     man1.install "pngquant.1"
   end
 
   test do
-    system "#{bin}/pngquant", "--help"
+    system "#{bin}/pngquant", test_fixtures("test.png"), "-o", "out.png"
+    File.exist? testpath/"out.png"
   end
 end

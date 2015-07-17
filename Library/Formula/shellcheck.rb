@@ -1,23 +1,24 @@
-require "formula"
 require "language/haskell"
 
 class Shellcheck < Formula
   include Language::Haskell::Cabal
 
+  desc "Static analysis and lint tool, for (ba)sh scripts"
   homepage "http://www.shellcheck.net"
-  url "https://github.com/koalaman/shellcheck/archive/v0.3.5.tar.gz"
-  sha1 "e2907df9a28b955bde122c4ddf144c6039c0b85d"
+  url "https://github.com/koalaman/shellcheck/archive/v0.3.8.tar.gz"
+  sha256 "fc13e21cc7bcf7eff57357d710a7fd4a9f0cfe059021e4dab51fe8dbdad01f79"
 
   bottle do
-    sha1 "487e94b0a1efe6953b4eb8163fbe3431f80f526b" => :yosemite
-    sha1 "1aa013ebd2eeb72e61f9cde87e41271abe13511e" => :mavericks
-    sha1 "af81f345a1ad58bdf1c7a742a945aba9eb3819ed" => :mountain_lion
+    sha256 "a957e04c6bb4a108173124a332986b0a2f6c196cec2e2d58313259465f460289" => :yosemite
+    sha256 "eac7dd062afbf499c2c80f069c1fdf6c88ca1b6edc8b80cf491072bdc1a9a603" => :mavericks
+    sha256 "a525ca3b03619fc1a4faeed9d92cb52d470ff0cf638fc6acb349c204fb6e461c" => :mountain_lion
   end
 
   depends_on "ghc" => :build
   depends_on "cabal-install" => :build
   depends_on "pandoc" => :build
-  depends_on "gmp"
+
+  setup_ghc_compilers
 
   def install
     install_cabal_package

@@ -2,136 +2,102 @@ require "formula"
 require "language/go"
 
 class Terraform < Formula
-  homepage "http://www.terraform.io/"
-  url "https://github.com/hashicorp/terraform/archive/v0.3.5.tar.gz"
-  sha1 "2c53b217faedbcffcdf5fb78f1ab585f36e5f21f"
+  desc "Tool to build, change, and version infrastructure"
+  homepage "https://www.terraform.io/"
+  url "https://github.com/hashicorp/terraform/archive/v0.6.0.tar.gz"
+  sha256 "444e342f2404679045a5f2a6b8c6de2f1226e2d80c3bd5d3db20b5f3b9592f18"
 
   bottle do
-    sha1 "71b4d2cf75a292ef44f6fe8c688d3396275ff7bb" => :yosemite
-    sha1 "2a9b71e0a58d2b07eedd33eb43ec11ba6e859996" => :mavericks
-    sha1 "2a5dcd44de95b2f95cd0bb0264398d9a71798990" => :mountain_lion
+    cellar :any
+    sha256 "7d312ee61acfd38770c637c5bb67a4a3e24cbfa36d3ca1525e11b3665407b80d" => :yosemite
+    sha256 "6ce67ae71a5e5ba170b40ba5418b5b472be38cd805e56c03e6e78f7066e9df26" => :mavericks
+    sha256 "d91bd97d9d5e4729be6b2cb07dae71ea6cfee4069776ddf901a5b91ed3c6a50e" => :mountain_lion
   end
 
   depends_on "go" => :build
 
-  go_resource "github.com/mitchellh/gox" do
-    url "https://github.com/mitchellh/gox.git", :tag => "v0.3.0"
+  go_resource "github.com/awslabs/aws-sdk-go" do
+    url "https://github.com/aws/aws-sdk-go.git",
+        :revision => "b1024787e030774e84f3aa6995f2c3891283b4a0"
   end
 
-  go_resource "github.com/mitchellh/iochan" do
-    url "https://github.com/mitchellh/iochan.git", :revision => "b584a329b193e206025682ae6c10cdbe03b0cd77"
-  end
+  terraform_deps = %w[
+    github.com/Azure/azure-sdk-for-go 91977650587a7bc48318c0430649d7fea886f111
+    github.com/Azure/go-pkcs12 a635c0684cd517745ca5c9552a312627791d5ba0
+    github.com/armon/circbuf f092b4f207b6e5cce0569056fba9e1a2735cb6cf
+    github.com/aws/aws-sdk-go b1024787e030774e84f3aa6995f2c3891283b4a0
+    github.com/cyberdelia/heroku-go 594d483b9b6a8ddc7cd2f1e3e7d1de92fa2de665
+    github.com/dylanmei/iso8601 2075bf119b58e5576c6ed9f867b8f3d17f2e54d4
+    github.com/dylanmei/winrmtest 3e9661c52c45dab9a8528966a23d421922fca9b9
+    github.com/fsouza/go-dockerclient bacc91d0d732390df132783988dc17c611881047
+    github.com/hashicorp/atlas-go 1b403631cd2d44764a68a9549874213cf95b285e
+    github.com/hashicorp/consul 9cb55266e7df62f2c3fd393503331140a05bfeb6
+    github.com/hashicorp/errwrap 7554cd9344cec97297fa6649b055a8c98c2a1e55
+    github.com/hashicorp/go-checkpoint 88326f6851319068e7b34981032128c0b1a6524d
+    github.com/hashicorp/go-multierror 56912fb08d85084aa318edcf2bba735b97cf35c5
+    github.com/hashicorp/go-version 999359b6b7a041ce16e695d51e92145b83f01087
+    github.com/hashicorp/hcl 54864211433d45cb780682431585b3e573b49e4a
+    github.com/hashicorp/yamux b2e55852ddaf823a85c67f798080eb7d08acd71d
+    github.com/imdario/mergo 61a52852277811e93e06d28e0d0c396284a7730b
+    github.com/masterzen/simplexml 95ba30457eb1121fa27753627c774c7cd4e90083
+    github.com/masterzen/winrm 132339029dfa67fd39ff8edeed2af78f2cca4fbb
+    github.com/masterzen/xmlpath 13f4951698adc0fa9c1dda3e275d489a24201161
+    github.com/mitchellh/cli 8102d0ed5ea2709ade1243798785888175f6e415
+    github.com/mitchellh/colorstring 61164e49940b423ba1f12ddbdf01632ac793e5e9
+    github.com/mitchellh/copystructure 6fc66267e9da7d155a9d3bd489e00dad02666dc6
+    github.com/mitchellh/go-homedir 1f6da4a72e57d4e7edd4a7295a585e0a3999a2d4
+    github.com/mitchellh/gox a5a468f84d74eb51ece602cb113edeb37167912f
+    github.com/mitchellh/iochan 87b45ffd0e9581375c491fef3d32130bb15c5bd7
+    github.com/mitchellh/go-linereader 07bab5fdd9580500aea6ada0e09df4aa28e68abd
+    github.com/mitchellh/mapstructure 2caf8efc93669b6c43e0441cdc6aed17546c96f3
+    github.com/mitchellh/osext 0dd3f918b21bec95ace9dc86c7e70266cfc5c702
+    github.com/mitchellh/packer 3239d157c16ad1612d652940b2da2981614c97e4
+    github.com/mitchellh/panicwrap 45cbfd3bae250c7676c077fb275be1a2968e066a
+    github.com/mitchellh/prefixedio 89d9b535996bf0a185f85b59578f2e245f9e1724
+    github.com/mitchellh/reflectwalk eecf4c70c626c7cfbb95c90195bc34d386c74ac6
+    github.com/nu7hatch/gouuid 179d4d0c4d8d407a32af483c2354df1d2c91e6c3
+    github.com/packer-community/winrmcp 743b1afe5ee3f6d5ba71a0d50673fa0ba2123d6b
+    github.com/pearkes/cloudflare 19e280b056f3742e535ea12ae92a37ea7767ea82
+    github.com/pearkes/digitalocean e966f00c2d9de5743e87697ab77c7278f5998914
+    github.com/pearkes/dnsimple 2a807d118c9e52e94819f414a6ec0293b45cad01
+    github.com/pearkes/mailgun 5b02e7e9ffee9869f81393e80db138f6ff726260
+    github.com/rackspace/gophercloud f956c6c6c0c55844eff4b153b5071ef6e3ab4ab4
+    github.com/satori/go.uuid afe1e2ddf0f05b7c29d388a3f8e76cb15c2231ca
+    github.com/soniah/dnsmadeeasy 5578a8c15e33958c61cf7db720b6181af65f4a9e
+    github.com/vaughan0/go-ini a98ad7ee00ec53921f08832bc06ecf7fd600e6a1
+    github.com/xanzy/go-cloudstack 4d162c3e1955cd12235a8f0abaa95fe0bbf08c63
+  ]
 
-  go_resource "github.com/hashicorp/hcl" do
-    url "https://github.com/hashicorp/hcl.git", :revision => "25719dbfedc20ce21c23dadb25983fad4694dcf8"
-  end
-
-  go_resource "github.com/mitchellh/copystructure" do
-    url "https://github.com/mitchellh/copystructure.git", :revision => "d8968bce41ab42f33aeb143afa95e331cb1ba886"
-  end
-
-  go_resource "github.com/mitchellh/reflectwalk" do
-    url "https://github.com/mitchellh/reflectwalk.git", :revision => "9989d7067f58812d814f5a837c5cbdd31799b694"
-  end
-
-  go_resource "github.com/mitchellh/mapstructure" do
-    url "https://github.com/mitchellh/mapstructure.git", :revision => "740c764bc6149d3f1806231418adb9f52c11bcbf"
-  end
-
-  go_resource "github.com/mitchellh/goamz" do
-    url "https://github.com/mitchellh/goamz.git", :revision => "ab653226ea8718749271e08212506d411714e865"
-  end
-
-  go_resource "github.com/vaughan0/go-ini" do
-    url "https://github.com/vaughan0/go-ini.git", :revision => "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
-  end
-
-  go_resource "github.com/pearkes/cloudflare" do
-    url "https://github.com/pearkes/cloudflare.git", :revision => "79e8a91a6e873a40d645ac9f03f7cdcbfdb8103a"
-  end
-
-  go_resource "github.com/armon/consul-api" do
-    url "https://github.com/armon/consul-api.git", :revision => "115162c46303047d9cefb2a953eeb643d4624a3e"
-  end
-
-  go_resource "github.com/pearkes/digitalocean" do
-    url "https://github.com/pearkes/digitalocean.git", :revision => "454ebf8720a34e077ebe62c7cd5a248cbf7ca8ff"
-  end
-
-  go_resource "github.com/pearkes/dnsimple" do
-    url "https://github.com/pearkes/dnsimple.git", :revision => "b01a0dd175142d0beafd32d7de2b9342d34cc4c0"
-  end
-
-  go_resource "github.com/cyberdelia/heroku-go" do
-    url "https://github.com/cyberdelia/heroku-go.git", :revision => "8cf5a2245af00170a36c9b2aaa504a97328659bb"
-  end
-
-  go_resource "github.com/pearkes/mailgun" do
-    url "https://github.com/pearkes/mailgun.git", :revision => "5b02e7e9ffee9869f81393e80db138f6ff726260"
-  end
-
-  go_resource "github.com/mitchellh/go-homedir" do
-    url "https://github.com/mitchellh/go-homedir.git", :revision => "7d2d8c8a4e078ce3c58736ab521a40b37a504c52"
-  end
-
-  go_resource "github.com/armon/circbuf" do
-    url "https://github.com/armon/circbuf.git", :revision => "f092b4f207b6e5cce0569056fba9e1a2735cb6cf"
-  end
-
-  go_resource "github.com/mitchellh/cli" do
-    url "https://github.com/mitchellh/cli.git", :revision => "bfacda5ba006a32b10ddfe2abad56c11661573eb"
-  end
-
-  go_resource "github.com/mitchellh/colorstring" do
-    url "https://github.com/mitchellh/colorstring.git", :revision => "15fc698eaae194ff160846daf77922a45b9290a7"
-  end
-
-  go_resource "github.com/mitchellh/osext" do
-    url "https://github.com/mitchellh/osext.git", :revision => "0dd3f918b21bec95ace9dc86c7e70266cfc5c702"
-  end
-
-  go_resource "github.com/mitchellh/panicwrap" do
-    url "https://github.com/mitchellh/panicwrap.git", :revision => "45cbfd3bae250c7676c077fb275be1a2968e066a"
-  end
-
-  go_resource "github.com/mitchellh/prefixedio" do
-    url "https://github.com/mitchellh/prefixedio.git", :revision => "89d9b535996bf0a185f85b59578f2e245f9e1724"
-  end
-
-  go_resource "github.com/mitchellh/go-linereader" do
-    url "https://github.com/mitchellh/go-linereader.git", :revision => "07bab5fdd9580500aea6ada0e09df4aa28e68abd"
-  end
-
-  go_resource "github.com/hashicorp/yamux" do
-    url "https://github.com/hashicorp/yamux.git", :revision => "9feabe6854fadca1abec9cd3bd2a613fe9a34000"
-  end
-
-  go_resource "github.com/hashicorp/go-checkpoint" do
-    url "https://github.com/hashicorp/go-checkpoint.git", :revision => "89ef2a697dd8cdb4623097d5bb9acdb19a470767"
-  end
-
-  go_resource "code.google.com/p/goauth2" do
-    url "https://code.google.com/p/goauth2/", :revision => "afe77d958c70",
-      :using => :hg
-  end
-
-  go_resource "code.google.com/p/google-api-go-client" do
-    url "https://code.google.com/p/google-api-go-client/", :revision => "e1c259484b49",
-      :using => :hg
+  terraform_deps.each_slice(2) do |x, y|
+    go_resource x do
+      url "https://#{x}.git", :revision => y
+    end
   end
 
   go_resource "code.google.com/p/go-uuid" do
-    url "https://code.google.com/p/go-uuid/", :revision => "7dda39b2e7d5",
-      :using => :hg
+    url "https://code.google.com/p/go-uuid", :using => :hg,
+      :revision => "35bc42037350"
   end
 
-  go_resource "code.google.com/p/go.crypto" do
-    url "https://code.google.com/p/go.crypto/", :revision => "00a7d3b31bba",
-      :using => :hg
+  %w[
+    crypto cc04154d65fb9296747569b107cfd05380b1ea3e
+    net d9558e5c97f85372afee28cf2b6059d7d3818919
+    oauth2 b5adcc2dcdf009d0391547edc6ecbaff889f5bb9
+    tools 997b3545fd86c3a2d8e5fe6366174d7786e71278
+    ].each_slice(2) do |x, y|
+    go_resource "golang.org/x/#{x}" do
+      url "https://go.googlesource.com/#{x}.git", :revision => y
+    end
   end
 
-  go_resource "github.com/hashicorp/atlas-go" do
-    url "https://github.com/hashicorp/atlas-go.git", :revision => "072814b5d05e34466c6c0fdd62cdecf184dc3521"
+  go_resource "google.golang.org/api" do
+    url "https://code.googlesource.com/google-api-go-client.git",
+      :revision => "a09229c13c2f13bbdedf7b31b506cad4c83ef3bf"
+  end
+
+  go_resource "google.golang.org/cloud" do
+    url "https://code.googlesource.com/gocloud.git",
+      :revision => "15c0736a396d4a63e96b29802364d721ed0a33d5"
   end
 
   def install
@@ -149,10 +115,13 @@ class Terraform < Formula
       buildpath.install "gox"
     end
 
+    cd "src/golang.org/x/tools/cmd/stringer" do
+      system "go", "build"
+      buildpath.install "stringer"
+    end
+
     cd terrapath do
-      # Clear ATLAS_TOKEN env var to not run atlas acceptance tests
-      # that would require an active atlas account
-      system "make", "test", "ATLAS_TOKEN="
+      system "go", "test", "./..."
 
       mkdir "bin"
       arch = MacOS.prefer_64_bit? ? "amd64" : "386"

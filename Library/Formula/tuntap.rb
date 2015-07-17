@@ -1,6 +1,7 @@
 require "formula"
 
 class Tuntap < Formula
+  desc "Virtual network interfaces for OS X"
   homepage "http://tuntaposx.sourceforge.net/"
 
   stable do
@@ -24,7 +25,7 @@ class Tuntap < Formula
   end
 
   depends_on UnsignedKextRequirement => [ :cask => "tuntap",
-      :binary => "http://sourceforge.net/projects/tuntaposx/files/tuntap/" ]
+      :download => "http://sourceforge.net/projects/tuntaposx/files/tuntap/" ]
 
   def install
     cd "tuntap" if build.head?

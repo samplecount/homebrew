@@ -4,6 +4,7 @@ require 'os/mac'
 require 'utils/json'
 require 'utils/inreplace'
 require 'utils/popen'
+require 'utils/fork'
 require 'open-uri'
 
 class Tty
@@ -54,7 +55,7 @@ def oh1 title
 end
 
 def opoo warning
-  $stderr.puts "#{Tty.red}Warning#{Tty.reset}: #{warning}"
+  $stderr.puts "#{Tty.yellow}Warning#{Tty.reset}: #{warning}"
 end
 
 def onoe error
@@ -84,7 +85,7 @@ end
 def interactive_shell f=nil
   unless f.nil?
     ENV['HOMEBREW_DEBUG_PREFIX'] = f.prefix
-    ENV['HOMEBREW_DEBUG_INSTALL'] = f.name
+    ENV['HOMEBREW_DEBUG_INSTALL'] = f.full_name
   end
 
   Process.wait fork { exec ENV['SHELL'] }
@@ -119,6 +120,26 @@ module Homebrew
   def self.git_last_commit
     HOMEBREW_REPOSITORY.cd { `git show -s --format="%cr" HEAD 2>/dev/null`.chuzzle }
   end
+
+  def self.install_gem_setup_path! gem, version=nil, executable=gem
+    require "rubygems"
+    ENV["PATH"] = "#{Gem.user_dir}/bin:#{ENV["PATH"]}"
+
+    args = [gem]
+    args << "-v" << version if version
+
+    unless quiet_system "gem", "list", "--installed", *args
+      safe_system "gem", "install", "--no-ri", "--no-rdoc",
+                                    "--user-install", *args
+    end
+
+    unless which executable
+      odie <<-EOS.undent
+        The '#{gem}' gem is installed but couldn't find '#{executable}' in the PATH:
+        #{ENV["PATH"]}
+      EOS
+    end
+  end
 end
 
 def with_system_path
@@ -127,6 +148,15 @@ def with_system_path
   yield
 ensure
   ENV['PATH'] = old_path
+end
+
+def run_as_not_developer(&block)
+  begin
+    old = ENV.delete "HOMEBREW_DEVELOPER"
+    yield
+  ensure
+    ENV["HOMEBREW_DEVELOPER"] = old
+  end
 end
 
 # Kernel.system but with exceptions
@@ -145,15 +175,18 @@ def quiet_system cmd, *args
 end
 
 def curl *args
-  curl = Pathname.new '/usr/bin/curl'
+  brewed_curl = HOMEBREW_PREFIX/"opt/curl/bin/curl"
+  curl = if MacOS.version <= "10.6" && brewed_curl.exist?
+    brewed_curl
+  else
+    Pathname.new '/usr/bin/curl'
+  end
   raise "#{curl} is not executable" unless curl.exist? and curl.executable?
 
   flags = HOMEBREW_CURL_ARGS
   flags = flags.delete("#") if ARGV.verbose?
 
   args = [flags, HOMEBREW_USER_AGENT, *args]
-  # See https://github.com/Homebrew/homebrew/issues/6103
-  args << "--insecure" if MacOS.version < "10.6"
   args << "--verbose" if ENV['HOMEBREW_CURL_VERBOSE']
   args << "--silent" unless $stdout.tty?
 
@@ -191,17 +224,24 @@ end
 
 def which_editor
   editor = ENV.values_at('HOMEBREW_EDITOR', 'VISUAL', 'EDITOR').compact.first
-  # If an editor wasn't set, try to pick a sane default
   return editor unless editor.nil?
 
   # Find Textmate
-  return 'mate' if which "mate"
+  editor = "mate" if which "mate"
   # Find BBEdit / TextWrangler
-  return 'edit' if which "edit"
+  editor ||= "edit" if which "edit"
   # Find vim
-  return 'vim' if which "vim"
+  editor ||= "vim" if which "vim"
   # Default to standard vim
-  return '/usr/bin/vim'
+  editor ||= "/usr/bin/vim"
+
+  opoo <<-EOS.undent
+    Using #{editor} because no editor was set in the environment.
+    This may change in the future, so we recommend setting EDITOR, VISUAL,
+    or HOMEBREW_EDITOR to your preferred text editor.
+  EOS
+
+  editor
 end
 
 def exec_editor *args
@@ -267,6 +307,16 @@ def paths
   end.uniq.compact
 end
 
+# return the shell profile file based on users' preference shell
+def shell_profile
+  case ENV["SHELL"]
+  when %r{/(ba)?sh} then "~/.bash_profile"
+  when %r{/zsh} then "~/.zshrc"
+  when %r{/ksh} then "~/.kshrc"
+  else "~/.bash_profile"
+  end
+end
+
 module GitHub extend self
   ISSUES_URI = URI.parse("https://api.github.com/search/issues")
 
@@ -277,9 +327,9 @@ module GitHub extend self
     def initialize(reset, error)
       super <<-EOS.undent
         GitHub #{error}
-        Try again in #{pretty_ratelimit_reset(reset)}, or create an API token:
-          https://github.com/settings/applications
-        and then set HOMEBREW_GITHUB_API_TOKEN.
+        Try again in #{pretty_ratelimit_reset(reset)}, or create an personal access token:
+          https://github.com/settings/tokens
+        and then set the token as: HOMEBREW_GITHUB_API_TOKEN
         EOS
     end
 
@@ -297,28 +347,26 @@ module GitHub extend self
       super <<-EOS.undent
         GitHub #{error}
         HOMEBREW_GITHUB_API_TOKEN may be invalid or expired, check:
-          https://github.com/settings/applications
+          https://github.com/settings/tokens
         EOS
     end
   end
 
-  def open url, headers={}, &block
+  def open(url, &block)
     # This is a no-op if the user is opting out of using the GitHub API.
     return if ENV['HOMEBREW_NO_GITHUB_API']
 
-    safely_load_net_https
+    require "net/https"
 
-    default_headers = {
+    headers = {
       "User-Agent" => HOMEBREW_USER_AGENT,
       "Accept"     => "application/vnd.github.v3+json",
     }
 
-    default_headers['Authorization'] = "token #{HOMEBREW_GITHUB_API_TOKEN}" if HOMEBREW_GITHUB_API_TOKEN
+    headers["Authorization"] = "token #{HOMEBREW_GITHUB_API_TOKEN}" if HOMEBREW_GITHUB_API_TOKEN
 
     begin
-      Kernel.open(url, default_headers.merge(headers)) do |f|
-        yield Utils::JSON.load(f.read)
-      end
+      Kernel.open(url, headers) { |f| yield Utils::JSON.load(f.read) }
     rescue OpenURI::HTTPError => e
       handle_api_error(e)
     rescue EOFError, SocketError, OpenSSL::SSL::SSLError => e
@@ -349,6 +397,10 @@ module GitHub extend self
     uri = ISSUES_URI.dup
     uri.query = build_query_string(query, qualifiers)
     open(uri) { |json| json["items"] }
+  end
+
+  def repository(user, repo)
+    open(URI.parse("https://api.github.com/repos/#{user}/#{repo}")) { |j| j }
   end
 
   def build_query_string(query, qualifiers)
@@ -402,25 +454,5 @@ module GitHub extend self
   def private_repo?(user, repo)
     uri = URI.parse("https://api.github.com/repos/#{user}/#{repo}")
     open(uri) { |json| json["private"] }
-  end
-
-  private
-
-  # If the zlib formula is loaded, TypeError will be raised when we try to load
-  # net/https. This monkeypatch prevents that and lets Net::HTTP fall back to
-  # the non-gzip codepath.
-  def safely_load_net_https
-    return if defined?(Net::HTTP)
-    if defined?(Zlib) && RUBY_VERSION >= "1.9"
-      require "net/protocol"
-      http = Class.new(Net::Protocol) do
-        def self.require(lib)
-          raise LoadError if lib == "zlib"
-          super
-        end
-      end
-      Net.const_set(:HTTP, http)
-    end
-    require "net/https"
   end
 end

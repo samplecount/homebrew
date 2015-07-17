@@ -1,16 +1,16 @@
-require "formula"
-
 class Openssl < Formula
-  homepage "https://openssl.org"
-  url "https://www.openssl.org/source/openssl-1.0.1j.tar.gz"
-  mirror "https://raw.githubusercontent.com/DomT4/LibreMirror/master/OpenSSL/openssl-1.0.1j.tar.gz"
-  sha256 "1b60ca8789ba6f03e8ef20da2293b8dc131c39d83814e775069f02d26354edf3"
+  desc "OpenSSL SSL/TLS cryptography library"
+  homepage "https://openssl.org/"
+  url "https://www.openssl.org/source/openssl-1.0.2d.tar.gz"
+  mirror "https://raw.githubusercontent.com/DomT4/LibreMirror/master/OpenSSL/openssl-1.0.2d.tar.gz"
+  mirror "https://www.mirrorservice.org/sites/ftp.openssl.org/source/openssl-1.0.2d.tar.gz"
+  sha256 "671c36487785628a703374c652ad2cebea45fa920ae5681515df25d9f2c9a8c8"
   revision 1
 
   bottle do
-    sha1 "ffc47898c5c5599745b644c1889e473418a18d5a" => :yosemite
-    sha1 "65e125a4777eb6dfb63f01a18f724246123dd79e" => :mavericks
-    sha1 "511057d68144943d149cea76718db55656c73dff" => :mountain_lion
+    sha256 "65de00409343fb371a065ae514da7a6cbf4f575dee9e0016bd22baccd5b644fa" => :yosemite
+    sha256 "ec0a2591aca21c855790464f691db864d5180cb8ae97c68429ca31560fd5fd29" => :mavericks
+    sha256 "cc001abc92c0991bef7817cd88c078f8110354d1529a194a4b2e16e5e09cbeca" => :mountain_lion
   end
 
   option :universal
@@ -29,13 +29,13 @@ class Openssl < Formula
   end
 
   def configure_args; %W[
-      --prefix=#{prefix}
-      --openssldir=#{openssldir}
-      no-ssl2
-      zlib-dynamic
-      shared
-      enable-cms
-    ]
+    --prefix=#{prefix}
+    --openssldir=#{openssldir}
+    no-ssl2
+    zlib-dynamic
+    shared
+    enable-cms
+  ]
   end
 
   def install
@@ -109,8 +109,22 @@ class Openssl < Formula
       /System/Library/Keychains/SystemRootCertificates.keychain
     ]
 
+    certs_list = `security find-certificate -a -p #{keychains.join(" ")}`
+    certs = certs_list.scan(
+      /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
+    )
+
+    valid_certs = certs.select do |cert|
+      IO.popen("openssl x509 -inform pem -checkend 0 -noout", "w") do |openssl_io|
+        openssl_io.write(cert)
+        openssl_io.close_write
+      end
+
+      $?.success?
+    end
+
     openssldir.mkpath
-    (openssldir/"cert.pem").atomic_write `security find-certificate -a -p #{keychains.join(" ")}`
+    (openssldir/"cert.pem").atomic_write(valid_certs.join("\n"))
   end
 
   def caveats; <<-EOS.undent
@@ -130,8 +144,8 @@ class Openssl < Formula
 
     # Check OpenSSL itself functions as expected.
     (testpath/"testfile.txt").write("This is a test file")
-    expected_checksum = "91b7b0b1e27bfbf7bc646946f35fa972c47c2d32"
-    system "#{bin}/openssl", "dgst", "-sha1", "-out", "checksum.txt", "testfile.txt"
+    expected_checksum = "e2d0fe1585a63ec6009c8016ff8dda8b17719a637405a4e23c0ff81339148249"
+    system "#{bin}/openssl", "dgst", "-sha256", "-out", "checksum.txt", "testfile.txt"
     open("checksum.txt") do |f|
       checksum = f.read(100).split("=").last.strip
       assert_equal checksum, expected_checksum

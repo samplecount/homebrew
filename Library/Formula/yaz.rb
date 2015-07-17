@@ -1,16 +1,14 @@
-# encoding: UTF-8
-require "formula"
-
 class Yaz < Formula
+  desc "Toolkit for Z39.50/SRW/SRU clients/servers"
   homepage "http://www.indexdata.com/yaz"
-  url "http://ftp.indexdata.dk/pub/yaz/yaz-5.6.0.tar.gz"
-  sha1 "ee317483ae1e8548c7cd8cf1ee5045e0dabd59e9"
+  url "http://ftp.indexdata.dk/pub/yaz/yaz-5.14.3.tar.gz"
+  sha256 "b7a444deb013ab01d051c3e42c07b083a046d0882286a2162dc83b9519b56a49"
 
   bottle do
     cellar :any
-    sha1 "ba5549d93a9a474340392d3127899680380cadbc" => :yosemite
-    sha1 "0b83e77df4993e5062331d4b11248f0fbb51a96e" => :mavericks
-    sha1 "c2fc103235210cc6f0f0e3682560b7b5988b66e4" => :mountain_lion
+    sha256 "8ea0ce100e9a38496bef54d610a4b8b8d37dc544112dc441e03a0b914f94511d" => :yosemite
+    sha256 "4aca9f0698012ffd241dc518c6a381af6d540ae6bef08955b374578144338cd8" => :mavericks
+    sha256 "521854c11c2e306ee287d4d9e96b51fce8857f6e2a801d612e93808b460b3cd0" => :mountain_lion
   end
 
   depends_on "pkg-config" => :build

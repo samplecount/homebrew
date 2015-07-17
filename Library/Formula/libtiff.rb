@@ -1,23 +1,21 @@
-require 'formula'
-
 class Libtiff < Formula
-  homepage 'http://www.remotesensing.org/libtiff/'
-  url 'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.3.tar.gz'
-  mirror 'http://download.osgeo.org/libtiff/tiff-4.0.3.tar.gz'
-  sha256 'ea1aebe282319537fb2d4d7805f478dd4e0e05c33d0928baba76a7c963684872'
+  desc "TIFF library and utilities"
+  homepage "http://www.remotesensing.org/libtiff/"
+  url "http://download.osgeo.org/libtiff/tiff-4.0.4.tar.gz"
+  mirror "ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.4.tar.gz"
+  sha256 "8cb1d90c96f61cdfc0bcf036acc251c9dbe6320334da941c7a83cfe1576ef890"
 
   bottle do
     cellar :any
-    sha1 "888fa993035b5af4b62daa6cf63c2b06988f4f8e" => :yosemite
-    sha1 "8e2a7f7509689733c0762e01410e247b7ccb98af" => :mavericks
-    sha1 "611e3478187bbcdb5f35970914ee4fe269aeb585" => :mountain_lion
-    sha1 "889158ea146de39f42a489b18af4321004cd54d8" => :lion
+    sha256 "606ea5cbfeaf91a9cbe43197be60b8cf7327f2badfd196e45975ce35e56e1e1e" => :yosemite
+    sha256 "9412670cd297d513720473b41c70cb8a03f8858f1b4e973ab3730f972273d553" => :mavericks
+    sha256 "6b995d86477c041fed6cf63ef216f3adb48e13876b2fb06d6fd03c5526c137fc" => :mountain_lion
   end
 
   option :universal
   option :cxx11
 
-  depends_on 'jpeg'
+  depends_on "jpeg"
 
   def install
     ENV.universal_binary if build.universal?
@@ -29,6 +27,23 @@ class Libtiff < Formula
                           "--disable-lzma",
                           "--with-jpeg-include-dir=#{jpeg}/include",
                           "--with-jpeg-lib-dir=#{jpeg}/lib"
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    (testpath/"test.c").write <<-EOS.undent
+      #include <tiffio.h>
+
+      int main(int argc, char* argv[])
+      {
+        TIFF *out = TIFFOpen(argv[1], "w");
+        TIFFSetField(out, TIFFTAG_IMAGEWIDTH, (uint32) 10);
+        TIFFClose(out);
+        return 0;
+      }
+    EOS
+    system ENV.cc, "test.c", "-L#{lib}", "-ltiff", "-o", "test"
+    system "./test", "test.tif"
+    assert_match /ImageWidth.*10/, shell_output("#{bin}/tiffdump test.tif")
   end
 end

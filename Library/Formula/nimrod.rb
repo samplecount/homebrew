@@ -1,71 +1,29 @@
-require 'formula'
-
 class Nimrod < Formula
-  homepage "http://nimrod-lang.org/"
-
-  stable do
-    url "http://nimrod-lang.org/download/nimrod_0.9.6.zip"
-    sha1 "a0be99cd67ca2283c6cf076bb7edee74d2f32dc5"
-
-    # This patch fixes an OS X-specific codegen issue.
-    # See http://github.com/Araq/Nimrod/issues/1701
-    patch :DATA
-  end
-
-  head "https://github.com/Araq/Nimrod.git", :branch => "devel"
+  desc "Statically typed, imperative programming language"
+  homepage "http://nim-lang.org/"
+  url "http://nim-lang.org/download/nim-0.11.2.tar.xz"
+  sha1 "2693022e35e31196d14ec2d1fbf11a90abac34cf"
+  head "https://github.com/Araq/Nim.git", :branch => "devel"
 
   bottle do
     cellar :any
-    sha1 "3a42be18ae05f497900cba5ba484314c68f62aa1" => :yosemite
-    sha1 "f30db501f57632a4872c0dde84a02ff326b58adb" => :mavericks
-    sha1 "af153261facdba0a6be325296e82b7c5707ebac6" => :mountain_lion
+    sha256 "11c12362d33127b9625020f76026fd5c4d98816b0fab9e2954243183b4b8e7b1" => :yosemite
+    sha256 "99f5155891465502cb7643fe98a02756c25a3b46352c69145f10fe4875bb707f" => :mavericks
+    sha256 "c2765cefc4bec4f25620347e0448cdbfa64e223203f1e3f44590326009172712" => :mountain_lion
   end
 
   def install
-    # For some reason the mingw variable doesn't get passed through,
-    # so hardcode it. This is fixed in HEAD.
-    inreplace "compiler/nimrod.ini", "${mingw}", "mingw32" unless build.head?
-
     system "/bin/sh", "build.sh"
     system "/bin/sh", "install.sh", prefix
 
-    if build.stable?
-      (prefix/"nimrod").install "compiler"
-      bin.install_symlink prefix/"nimrod/bin/nimrod"
-    else
-      (prefix/"nim").install "compiler"
-      bin.install_symlink prefix/"nim/bin/nim"
-      bin.install_symlink prefix/"nim/bin/nim" => "nimrod"
-    end
+    bin.install_symlink prefix/"nim/bin/nim"
+    bin.install_symlink prefix/"nim/bin/nim" => "nimrod"
   end
 
   test do
     (testpath/"hello.nim").write <<-EOS.undent
-      echo("Hi!")
+      echo("hello")
     EOS
-    system "#{bin}/nimrod", "compile", "--run", "hello.nim"
+    assert_equal "hello", shell_output("#{bin}/nim compile --verbosity:0 --run #{testpath}/hello.nim").chomp
   end
 end
-
-__END__
---- a/lib/pure/concurrency/cpuinfo.nim
-+++ b/lib/pure/concurrency/cpuinfo.nim
-@@ -20,15 +20,15 @@ when defined(linux):
-   import linux
-
- when defined(freebsd) or defined(macosx):
--  {.emit:"#include <sys/types.h>".}
-+  {.emit:"#include <sys/types.h>\n".}
-
- when defined(openbsd) or defined(netbsd):
--  {.emit:"#include <sys/param.h>".}
-+  {.emit:"#include <sys/param.h>\n".}
-
- when defined(macosx) or defined(bsd):
-   # we HAVE to emit param.h before sysctl.h so we cannot use .header here
-   # either. The amount of archaic bullshit in Poonix based OSes is just insane.
--  {.emit:"#include <sys/sysctl.h>".}
-+  {.emit:"#include <sys/sysctl.h>\n".}
-   const
-     CTL_HW = 6
-     HW_AVAILCPU = 25

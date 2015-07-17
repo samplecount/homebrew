@@ -1,16 +1,16 @@
 require "formula"
 
 class Sassc < Formula
+  desc "Wrapper around libsass that helps to create command-line apps"
   homepage "https://github.com/sass/sassc"
-  url "https://github.com/sass/sassc/archive/3.0.2.tar.gz"
-  sha1 "4666a8452005613afe4129a8e0cb4dd9e54b2868"
+  url "https://github.com/sass/sassc.git", :tag => "3.2.4", :revision => "a88dd098143a1297d68a509f6dd99be25487197a"
   head "https://github.com/sass/sassc.git"
 
   bottle do
     cellar :any
-    sha1 "65fb58f5c6fe34eeff1ea207b8757bcec2a3e1c9" => :yosemite
-    sha1 "262ebee2c5fddcb2e29789ab8114c83abf3aeded" => :mavericks
-    sha1 "740702bd6479be486197055af380bc941ccb312e" => :mountain_lion
+    sha256 "1ad01ed7c28efd12f067f2cc6a743ec291218231462f17419b32be0d09538901" => :yosemite
+    sha256 "ce98149a0cf434fda2ce3e9803f92a77c4581df9ca7b9f8f13478b56670c956c" => :mavericks
+    sha256 "16150a5116dd01b150f1b48696e0dfc256cb38d5b4f5aff9f4edb18bd5d9c54c" => :mountain_lion
   end
 
   depends_on "autoconf" => :build

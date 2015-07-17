@@ -1,15 +1,15 @@
-require "formula"
-
 class Gstreamer < Formula
+  desc "GStreamer is a development framework for multimedia applications"
   homepage "http://gstreamer.freedesktop.org/"
-  url "http://gstreamer.freedesktop.org/src/gstreamer/gstreamer-1.4.4.tar.xz"
-  mirror "http://ftp.osuosl.org/pub/blfs/svn/g/gstreamer-1.4.4.tar.xz"
-  sha256 "f0e305d91a93d05bf9e332cd4256ca07d77f5186a4d73847b7ae6db218f2c237"
+  url "http://gstreamer.freedesktop.org/src/gstreamer/gstreamer-1.4.5.tar.xz"
+  mirror "http://ftp.osuosl.org/pub/blfs/svn/g/gstreamer-1.4.5.tar.xz"
+  sha256 "40801aa7f979024526258a0e94707ba42b8ab6f7d2206e56adbc4433155cb0ae"
 
   bottle do
-    sha1 "3684b3cfd9aa5c8d00ca104062b3980d13d9d774" => :yosemite
-    sha1 "10412679f79ec07b34231eced9847b98b176d76b" => :mavericks
-    sha1 "74f8eac19b8b31f394dfe6e8051da2f9b0053823" => :mountain_lion
+    revision 2
+    sha256 "ac4e49623736041c7d8fdc981c155b7c40e12c17c0f7e04d2f32d2f0ee1b5ffb" => :yosemite
+    sha256 "2a91498326318c4de55ddb5eae47b3540bbda7ac44166899886e5cc1c2ad7fb2" => :mavericks
+    sha256 "b943636f153cc792c2d63e7ce68c4084d1ffff2987606e8ec95f1ef0a77cea82" => :mountain_lion
   end
 
   head do
@@ -38,6 +38,10 @@ class Gstreamer < Formula
     if build.head?
       ENV["NOCONFIGURE"] = "yes"
       system "./autogen.sh"
+
+      # Ban trying to chown to root.
+      # https://bugzilla.gnome.org/show_bug.cgi?id=750367
+      args << "--with-ptp-helper-permissions=none"
     end
 
     # Look for plugins in HOMEBREW_PREFIX/lib/gstreamer-1.0 instead of
@@ -50,5 +54,9 @@ class Gstreamer < Formula
     system "./configure", *args
     system "make"
     system "make", "install"
+  end
+
+  test do
+    system bin/"gst-inspect-1.0"
   end
 end

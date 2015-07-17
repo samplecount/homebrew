@@ -1,6 +1,5 @@
-require "formula"
-
 class GnuIndent < Formula
+  desc "C code prettifier"
   homepage "https://www.gnu.org/software/indent/"
   url "http://ftpmirror.gnu.org/indent/indent-2.2.10.tar.gz"
   mirror "https://ftp.gnu.org/gnu/indent/indent-2.2.10.tar.gz"
@@ -27,6 +26,18 @@ class GnuIndent < Formula
 
     system "./configure", *args
     system "make", "install"
+  end
+
+  test do
+    (testpath/"test.c").write("int main(){ return 0; }")
+    system "#{bin}/gindent", "test.c"
+    assert_equal File.read("test.c"), <<-EOS.undent
+      int
+      main ()
+      {
+        return 0;
+      }
+    EOS
   end
 end
 

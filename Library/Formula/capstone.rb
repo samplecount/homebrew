@@ -1,16 +1,14 @@
-require "formula"
-
 class Capstone < Formula
+  desc "Multi-platform, multi-architecture disassembly framework"
   homepage "http://capstone-engine.org"
-  url "http://capstone-engine.org/download/3.0/capstone-3.0.tgz"
-  sha1 "26e591b8323ed3f6e92637d7ee953cb505687efa"
-  revision 1
+  url "http://capstone-engine.org/download/3.0.4/capstone-3.0.4.tgz"
+  sha256 "3e88abdf6899d11897f2e064619edcc731cc8e97e9d4db86495702551bb3ae7f"
 
   bottle do
     cellar :any
-    sha1 "ab195b7884a37afc24ea36a8d0e722bb95e19045" => :yosemite
-    sha1 "36b3f1d91609bd23fc48fc3fe594ce775635e119" => :mavericks
-    sha1 "22dc40e9afc3037a0312f22ae8324395459063dc" => :mountain_lion
+    sha256 "5bbd8f7d9e0ae0d3b23c7d478fdb02476e8cee847577576d543bf98649985975" => :yosemite
+    sha256 "0cfd7478b21360ffea1aac61ec64eeae612bce247a681b0205ffd14790f8f7dc" => :mavericks
+    sha256 "585042b1452fbeda9efd07da4b8400d56d166afd5e5f1120da20975e41001e88" => :mountain_lion
   end
 
   def install
@@ -22,6 +20,12 @@ class Capstone < Formula
     ENV["HOMEBREW_CAPSTONE"] = "1"
     system "./make.sh"
     system "./make.sh", "install"
+
+    # As per the above inreplace, the pkgconfig file needs fixing as well.
+    inreplace lib/"pkgconfig/capstone.pc" do |s|
+      s.gsub! "/usr/lib", lib
+      s.gsub! "/usr/include/capstone", "#{include}/capstone"
+    end
   end
 
   test do

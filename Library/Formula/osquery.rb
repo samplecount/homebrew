@@ -1,28 +1,26 @@
 require "formula"
 
 class Osquery < Formula
-  homepage "http://osquery.io"
+  desc "SQL powered operating system instrumentation and analytics"
+  homepage "https://osquery.io"
   # pull from git tag to get submodules
-  url "https://github.com/facebook/osquery.git", :tag => "1.2.2"
+  url "https://github.com/facebook/osquery.git", :tag => "1.4.7", :revision => "9d783fee002196c73c4b2622cc7e410d6ce4a4b3"
 
   bottle do
-    sha1 "b65784d812adc0b95fded3c3901225541b8a2c40" => :yosemite
-    sha1 "51597010429a9f75196c09baa345a146468184f3" => :mavericks
+    sha256 "e6f20336f26db2aaeba7a400f1e2b18e6b385e3b9a17a951b8c5a7c57f815ec1" => :yosemite
   end
 
-  # Build currently fails on Mountain Lion:
-  # https://github.com/facebook/osquery/issues/409
-  # Will welcome PRs to fix this!
-  depends_on :macos => :mavericks
+  # osquery only support OS X Yosemite and above. Do not remove this.
+  depends_on :macos => :yosemite
 
   depends_on "cmake" => :build
-
-  depends_on "boost"
-  depends_on "gflags"
-  depends_on "glog"
+  depends_on "boost" => :build
+  depends_on "doxygen" => :build
+  depends_on "gflags" => :build
+  depends_on "rocksdb" => :build
+  depends_on "thrift" => :build
+  depends_on "yara" => :build
   depends_on "openssl"
-  depends_on "rocksdb"
-  depends_on "thrift"
 
   resource "markupsafe" do
     url "https://pypi.python.org/packages/source/M/MarkupSafe/MarkupSafe-0.23.tar.gz"
@@ -45,9 +43,8 @@ class Osquery < Formula
     end
 
     system "cmake", ".", *std_cmake_args
+    system "make"
     system "make", "install"
-
-    prefix.install "tools/deployment/com.facebook.osqueryd.plist"
   end
 
   plist_options :startup => true, :manual => "osqueryd"
@@ -55,9 +52,9 @@ class Osquery < Formula
   test do
     require 'open3'
     Open3.popen3("#{bin}/osqueryi") do |stdin, stdout, _|
-      stdin.write(".mode line\nSELECT major FROM osx_version;")
+      stdin.write(".mode line\nSELECT count(version) as lines FROM osquery_info;")
       stdin.close
-      assert_equal "major = 10\n", stdout.read
+      assert_equal "lines = 1\n", stdout.read
     end
   end
 end

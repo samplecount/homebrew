@@ -1,35 +1,38 @@
-require "formula"
-
 class Postgresql < Formula
-  homepage "http://www.postgresql.org/"
+  desc "Object-relational database system"
+  homepage "https://www.postgresql.org/"
 
   stable do
-    url "http://ftp.postgresql.org/pub/source/v9.4.0/postgresql-9.4.0.tar.bz2"
-    sha256 "7a35c3cb77532f7b15702e474d7ef02f0f419527ee80a4ca6036fffb551625a5"
+    url "https://ftp.postgresql.org/pub/source/v9.4.4/postgresql-9.4.4.tar.bz2"
+    sha256 "538ed99688d6fdbec6fd166d1779cf4588bf2f16c52304e5ef29f904c43b0013"
   end
 
   bottle do
-    sha1 "1cf71ee1cfc061cdc82f6164e72ffba1ac8dd8e8" => :yosemite
-    sha1 "9dbd8dc89c4d3d941bc6f5fa34ef0f321f440780" => :mavericks
-    sha1 "efd661ace5a5f2657d047098dec15136aa4f0249" => :mountain_lion
+    sha256 "25c2e16deaf18141e48f7b567ef02f8c426cc4978a41e1ee0f7f2484d8ddf2c9" => :yosemite
+    sha256 "553b8e7f01b436a9152a737f66addbd7062bb90dc711e1e50a86a6dfa3f3a673" => :mavericks
+    sha256 "78638d3488658f86664b3b98ce78d127dedbe2273e50e2bd4ac7b0af550c20c8" => :mountain_lion
   end
 
-  option '32-bit'
-  option 'no-perl', 'Build without Perl support'
-  option 'no-tcl', 'Build without Tcl support'
-  option 'enable-dtrace', 'Build with DTrace support'
+  option "32-bit"
+  option "without-perl", "Build without Perl support"
+  option "without-tcl", "Build without Tcl support"
+  option "with-dtrace", "Build with DTrace support"
 
-  depends_on 'openssl'
-  depends_on 'readline'
-  depends_on 'libxml2' if MacOS.version <= :leopard # Leopard libxml is too old
+  deprecated_option "no-perl" => "without-perl"
+  deprecated_option "no-tcl" => "without-tcl"
+  deprecated_option "enable-dtrace" => "with-dtrace"
+
+  depends_on "openssl"
+  depends_on "readline"
+  depends_on "libxml2" if MacOS.version <= :leopard # Leopard libxml is too old
   depends_on :python => :optional
 
-  conflicts_with 'postgres-xc',
-    :because => 'postgresql and postgres-xc install the same binaries.'
+  conflicts_with "postgres-xc",
+    :because => "postgresql and postgres-xc install the same binaries."
 
   fails_with :clang do
     build 211
-    cause 'Miscompilation resulting in segfault on queries'
+    cause "Miscompilation resulting in segfault on queries"
   end
 
   def install
@@ -50,12 +53,12 @@ class Postgresql < Formula
       --with-libxslt
     ]
 
-    args << "--with-python" if build.with? 'python'
-    args << "--with-perl" unless build.include? 'no-perl'
+    args << "--with-python" if build.with? "python"
+    args << "--with-perl" if build.with? "perl"
 
-    # The CLT is required to build tcl support on 10.7 and 10.8 because
+    # The CLT is required to build Tcl support on 10.7 and 10.8 because
     # tclConfig.sh is not part of the SDK
-    unless build.include?("no-tcl") || MacOS.version < :mavericks && MacOS::CLT.installed?
+    if build.with?("tcl") && (MacOS.version >= :mavericks || MacOS::CLT.installed?)
       args << "--with-tcl"
 
       if File.exist?("#{MacOS.sdk_path}/usr/lib/tclConfig.sh")
@@ -63,7 +66,7 @@ class Postgresql < Formula
       end
     end
 
-    args << "--enable-dtrace" if build.include? 'enable-dtrace'
+    args << "--enable-dtrace" if build.with? "dtrace"
     args << "--with-uuid=e2fs"
 
     if build.build_32_bit?
@@ -71,7 +74,7 @@ class Postgresql < Formula
     end
 
     system "./configure", *args
-    system "make install-world"
+    system "make", "install-world"
   end
 
   def post_install
@@ -80,26 +83,13 @@ class Postgresql < Formula
     end
   end
 
-  def caveats
-    s = <<-EOS.undent
+  def caveats; <<-EOS.undent
     If builds of PostgreSQL 9 are failing and you have version 8.x installed,
     you may need to remove the previous version first. See:
       https://github.com/Homebrew/homebrew/issues/2510
 
     To migrate existing data from a previous major version (pre-9.4) of PostgreSQL, see:
-      http://www.postgresql.org/docs/9.4/static/upgrading.html
-    EOS
-
-    s << "\n" << gem_caveats if MacOS.prefer_64_bit?
-    return s
-  end
-
-  def gem_caveats; <<-EOS.undent
-    When installing the postgres gem, including ARCHFLAGS is recommended:
-      ARCHFLAGS="-arch x86_64" gem install pg
-
-    To install gems without sudo, see the Homebrew documentation:
-    https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Gems,-Eggs-and-Perl-Modules.md
+      https://www.postgresql.org/docs/9.4/static/upgrading.html
     EOS
   end
 
@@ -134,6 +124,6 @@ class Postgresql < Formula
   end
 
   test do
-    system "#{bin}/initdb", testpath
+    system "#{bin}/initdb", testpath/"test"
   end
 end

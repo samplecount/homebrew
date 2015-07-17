@@ -1,5 +1,3 @@
-require "formula"
-
 class Gcc < Formula
   def arch
     if Hardware::CPU.type == :intel
@@ -21,21 +19,22 @@ class Gcc < Formula
     `uname -r`.chomp
   end
 
-  homepage "http://gcc.gnu.org"
-  url "http://ftpmirror.gnu.org/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2"
-  mirror "ftp://gcc.gnu.org/pub/gcc/releases/gcc-4.9.2/gcc-4.9.2.tar.bz2"
-  sha1 "79dbcb09f44232822460d80b033c962c0237c6d8"
-  revision 1
+  desc "GNU compiler collection"
+  homepage "https://gcc.gnu.org"
+  url "http://ftpmirror.gnu.org/gcc/gcc-5.2.0/gcc-5.2.0.tar.bz2"
+  mirror "https://ftp.gnu.org/gnu/gcc/gcc-5.2.0/gcc-5.2.0.tar.bz2"
+  sha256 "5f835b04b5f7dd4f4d2dc96190ec1621b8d89f2dc6f638f9f8bc1b1014ba8cad"
 
   bottle do
-    sha1 "8cc5eefa405e7d818a13fa1ad5a144b4442bed40" => :yosemite
-    sha1 "cc9726a7866c6ff09115f30812de81e5b810a72b" => :mavericks
-    sha1 "02ae2cff32c5a317552f4d0df993bc874b35d70c" => :mountain_lion
+    sha256 "b9a41591f99a25a5d57d818953def46c4c654eb5ec8738b5eb975b366068abc3" => :yosemite
+    sha256 "c70b4f9c65930c0f127cb8a0b220d7b1494edea11218f5ba519b758c3eb7a2cd" => :mavericks
+    sha256 "131566719249be8795422d86fff0c4b2ee12bb58ad5320dcbff0af2c40d3ece7" => :mountain_lion
   end
 
   option "with-java", "Build the gcj compiler"
   option "with-all-languages", "Enable all compilers and languages, except Ada"
   option "with-nls", "Build with native language support (localization)"
+  option "with-jit", "Build the jit compiler"
   option "without-fortran", "Build without the gfortran compiler"
   # enabling multilib on a host that can't run 64-bit results in build failures
   option "without-multilib", "Build without multilib support" if MacOS.prefer_64_bit?
@@ -43,7 +42,6 @@ class Gcc < Formula
   depends_on "gmp"
   depends_on "libmpc"
   depends_on "mpfr"
-  depends_on "cloog"
   depends_on "isl"
   depends_on "ecj" if build.with?("java") || build.with?("all-languages")
 
@@ -66,8 +64,12 @@ class Gcc < Formula
   end
 
   def version_suffix
-    version.to_s.slice(/\d\.\d/)
+    version.to_s.slice(/\d/)
   end
+
+  # Fix for libgccjit.so linkage on Darwin
+  # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64089
+  patch :DATA
 
   def install
     # GCC will suffer build errors if forced to use a particular linker.
@@ -77,14 +79,19 @@ class Gcc < Formula
       ENV["AS"] = ENV["AS_FOR_TARGET"] = "#{Formula["cctools"].bin}/as"
     end
 
-    # C, C++, ObjC compilers are always built
-    languages = %w[c c++ objc obj-c++]
+    if build.with? "all-languages"
+      # Everything but Ada, which requires a pre-existing GCC Ada compiler
+      # (gnat) to bootstrap. GCC 4.6.0 adds go as a language option, but it is
+      # currently only compilable on Linux.
+      languages = %w[c c++ objc obj-c++ fortran java jit]
+    else
+      # C, C++, ObjC compilers are always built
+      languages = %w[c c++ objc obj-c++]
 
-    # Everything but Ada, which requires a pre-existing GCC Ada compiler
-    # (gnat) to bootstrap. GCC 4.6.0 add go as a language option, but it is
-    # currently only compilable on Linux.
-    languages << "fortran" if build.with?("fortran") || build.with?("all-languages")
-    languages << "java" if build.with?("java") || build.with?("all-languages")
+      languages << "fortran" if build.with? "fortran"
+      languages << "java" if build.with? "java"
+      languages << "jit" if build.with? "jit"
+    end
 
     args = [
       "--build=#{arch}-apple-darwin#{osmajor}",
@@ -96,15 +103,15 @@ class Gcc < Formula
       "--with-gmp=#{Formula["gmp"].opt_prefix}",
       "--with-mpfr=#{Formula["mpfr"].opt_prefix}",
       "--with-mpc=#{Formula["libmpc"].opt_prefix}",
-      "--with-cloog=#{Formula["cloog"].opt_prefix}",
       "--with-isl=#{Formula["isl"].opt_prefix}",
       "--with-system-zlib",
       "--enable-libstdcxx-time=yes",
       "--enable-stage1-checking",
       "--enable-checking=release",
       "--enable-lto",
-      # A no-op unless --HEAD is built because in head warnings will
-      # raise errors. But still a good idea to include.
+      # Use 'bootstrap-debug' build configuration to force stripping of object
+      # files prior to comparison during bootstrap (broken by Xcode 6.3).
+      "--with-build-config=bootstrap-debug",
       "--disable-werror",
       "--with-pkgversion=Homebrew #{name} #{pkg_version} #{build.used_options*" "}".strip,
       "--with-bugurl=https://github.com/Homebrew/homebrew/issues",
@@ -130,6 +137,8 @@ class Gcc < Formula
       args << "--enable-multilib"
     end
 
+    args << "--enable-host-shared" if build.with?("jit") || build.with?("all-languages")
+
     # Ensure correct install names when linking against libgcc_s;
     # see discussion in https://github.com/Homebrew/homebrew/pull/34303
     inreplace "libgcc/config/t-slibgcc-darwin", "@shlib_slibdir@", "#{HOMEBREW_PREFIX}/lib/gcc/#{version_suffix}"
@@ -137,7 +146,7 @@ class Gcc < Formula
     mkdir "build" do
       unless MacOS::CLT.installed?
         # For Xcode-only systems, we need to tell the sysroot path.
-        # "native-system-header's will be appended
+        # "native-system-headers" will be appended
         args << "--with-native-system-header-dir=/usr/include"
         args << "--with-sysroot=#{MacOS.sdk_path}"
       end
@@ -166,7 +175,7 @@ class Gcc < Formula
         "#{lib}/gcc/#{version_suffix}/logging.properties",
         "#{lib}/gcc/#{version_suffix}/security/classpath.security",
         "#{lib}/gcc/#{version_suffix}/i386/logging.properties",
-        "#{lib}/gcc/#{version_suffix}/i386/security/classpath.security"
+        "#{lib}/gcc/#{version_suffix}/i386/security/classpath.security",
       ]
       config_files.each do |file|
         add_suffix file, version_suffix if File.exist? file
@@ -174,7 +183,7 @@ class Gcc < Formula
     end
   end
 
-  def add_suffix file, suffix
+  def add_suffix(file, suffix)
     dir = File.dirname(file)
     ext = File.extname(file)
     base = File.basename(file, ext)
@@ -203,11 +212,11 @@ class Gcc < Formula
     system "#{bin}/gcc-#{version_suffix}", "-o", "hello-c", "hello-c.c"
     assert_equal "Hello, world!\n", `./hello-c`
 
-    (testpath/"hello-cc.cc").write <<-'EOS'.undent
+    (testpath/"hello-cc.cc").write <<-EOS.undent
       #include <iostream>
       int main()
       {
-        std::cout << "Hello, world!\n";
+        std::cout << "Hello, world!" << std::endl;
         return 0;
       }
     EOS
@@ -233,3 +242,18 @@ class Gcc < Formula
     end
   end
 end
+__END__
+diff --git a/gcc/jit/Make-lang.in b/gcc/jit/Make-lang.in
+index 44d0750..4df2a9c 100644
+--- a/gcc/jit/Make-lang.in
++++ b/gcc/jit/Make-lang.in
+@@ -85,8 +85,7 @@ $(LIBGCCJIT_FILENAME): $(jit_OBJS) \
+	     $(jit_OBJS) libbackend.a libcommon-target.a libcommon.a \
+	     $(CPPLIB) $(LIBDECNUMBER) $(LIBS) $(BACKENDLIBS) \
+	     $(EXTRA_GCC_OBJS) \
+-	     -Wl,--version-script=$(srcdir)/jit/libgccjit.map \
+-	     -Wl,-soname,$(LIBGCCJIT_SONAME)
++	     -Wl,-install_name,$(LIBGCCJIT_SONAME)
+
+ $(LIBGCCJIT_SONAME_SYMLINK): $(LIBGCCJIT_FILENAME)
+	ln -sf $(LIBGCCJIT_FILENAME) $(LIBGCCJIT_SONAME_SYMLINK)

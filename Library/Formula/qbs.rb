@@ -1,21 +1,24 @@
 require "formula"
 
 class Qbs < Formula
-  homepage "http://qt-project.org/wiki/qbs"
-  url "http://download.qt-project.org/official_releases/qbs/1.3.2/qbs-1.3.2.src.tar.gz"
-  sha1 "ce2d807c145e239d39e360521d62486eb1e3d108"
+  desc "Qt Build Suite"
+  homepage "https://wiki.qt.io/Qt_Build_Suite"
+  url "https://download.qt.io/official_releases/qbs/1.4.1/qbs-src-1.4.1.tar.gz"
+  sha1 "05aac5341859159556bc0f3f1ba96c46179d12d3"
 
   bottle do
-    cellar :any
-    sha1 "cc8d1816df4336ab9d8745e332efb3081ac8abf7" => :yosemite
-    sha1 "f95dc259474a8006364b62f7fcbc943783a6ccd9" => :mavericks
-    sha1 "bbdadfad3bc1d7a6024b42245999d460ad719515" => :mountain_lion
+    sha256 "1a97288225e37a20e8686e5fa2cbbfed4f812becd03f1eb39e5ca9e9364273a3" => :yosemite
+    sha256 "d1af3eccc7ed1ad98dee8eeb54739334648b68138784f7f672214037be9b9cea" => :mavericks
+    sha256 "d05570afa0827c1adbf3d1e37609b372b96e832728e60dd5a0d75e943837311a" => :mountain_lion
   end
 
   depends_on "qt5"
+  depends_on :java => :optional
 
   def install
-    system "qmake", "qbs.pro", "-r"
+    args = []
+    args << "CONFIG+=qbs_enable_java" if build.with? "java"
+    system "qmake", "qbs.pro", "-r", "QBS_INSTALL_PREFIX=/", *args
     system "make", "install", "INSTALL_ROOT=#{prefix}"
   end
 
@@ -36,6 +39,7 @@ class Qbs < Formula
       }
     EOS
 
-    system "#{bin}/qbs", "run", "-f", "test.qbp", "profile:clang"
+    system "#{bin}/qbs", "setup-toolchains", "--detect", "--settings-dir", testpath
+    system "#{bin}/qbs", "run", "--settings-dir", testpath, "-f", "test.qbp", "profile:clang"
   end
 end

@@ -1,12 +1,11 @@
-require 'formula'
-
 class Shiboken < Formula
-  homepage 'http://www.pyside.org/docs/shiboken'
-  url 'http://download.qt-project.org/official_releases/pyside/shiboken-1.2.2.tar.bz2'
-  mirror 'https://distfiles.macports.org/py-shiboken/shiboken-1.2.2.tar.bz2'
-  sha1 '55731616791500750ef373f382057a43e133fa08'
+  desc "GeneratorRunner plugin that outputs C++ code for CPython extensions"
+  homepage "https://wiki.qt.io/PySide"
+  url "https://download.qt.io/official_releases/pyside/shiboken-1.2.2.tar.bz2"
+  mirror "https://distfiles.macports.org/py-shiboken/shiboken-1.2.2.tar.bz2"
+  sha256 "7625bbcf1fe313fd910c6b8c9cf49ac5495499f9d00867115a2f1f2a69fce5c4"
 
-  head 'git://gitorious.org/pyside/shiboken.git'
+  head "https://github.com/PySide/Shiboken.git"
 
   bottle do
     revision 2
@@ -15,8 +14,8 @@ class Shiboken < Formula
     sha1 "81ea5e997e9910a54cf35e4b5827ab7b502836b3" => :mountain_lion
   end
 
-  depends_on 'cmake' => :build
-  depends_on 'qt'
+  depends_on "cmake" => :build
+  depends_on "qt"
 
   # don't use depends_on :python because then bottles install Homebrew's python
   option "without-python", "Build without python 2 support"

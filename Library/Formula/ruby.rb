@@ -1,14 +1,13 @@
-require "formula"
-
 class Ruby < Formula
+  desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
-  url "http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.5.tar.bz2"
-  sha256 "0241b40f1c731cb177994a50b854fb7f18d4ad04dcefc18acc60af73046fb0a9"
+  url "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.2.tar.bz2"
+  sha256 "f3b8ffa6089820ee5bdc289567d365e5748d4170e8aa246d2ea6576f24796535"
 
   bottle do
-    sha1 "5bca9a9b689a3fb23e4c6660e1e3256c39fc62c9" => :yosemite
-    sha1 "80c5424e125d3493d3423399a9c3933b4108ac98" => :mavericks
-    sha1 "601037982116fbdd5389cb7dcf2e1bf2c5abea4e" => :mountain_lion
+    sha256 "a3899bcda507cb92ec8b56c85ce87f243d36ad515b349a5cde0817d6eadd8761" => :yosemite
+    sha256 "adeaf776e7f24bdefd0c2f012432650e85e05ccb55735a68edb225c13cb96105" => :mavericks
+    sha256 "d7d2f35a774a39f565f27bfbcbf7e5813c4b8535c8c70eaee0cd9a9f834d5b0d" => :mountain_lion
   end
 
   head do
@@ -17,7 +16,7 @@ class Ruby < Formula
   end
 
   option :universal
-  option "with-suffix", "Suffix commands with '21'"
+  option "with-suffix", "Suffix commands with '22'"
   option "with-doc", "Install documentation"
   option "with-tcltk", "Install with Tcl/Tk support"
 
@@ -48,7 +47,7 @@ class Ruby < Formula
       args << "--with-arch=#{Hardware::CPU.universal_archs.join(",")}"
     end
 
-    args << "--program-suffix=21" if build.with? "suffix"
+    args << "--program-suffix=22" if build.with? "suffix"
     args << "--with-out-ext=tk" if build.without? "tcltk"
     args << "--disable-install-doc" if build.without? "doc"
     args << "--disable-dtrace" unless MacOS::CLT.installed?
@@ -71,14 +70,16 @@ class Ruby < Formula
     system "./configure", *args
     system "make"
     system "make", "install"
+  end
 
+  def post_install
     # Customize rubygems to look/install in the global gem directory
     # instead of in the Cellar, making gems last across reinstalls
     (lib/"ruby/#{abi_version}/rubygems/defaults/operating_system.rb").write rubygems_config
   end
 
   def abi_version
-    "2.1.0"
+    "2.2.0"
   end
 
   def rubygems_config; <<-EOS.undent
@@ -87,6 +88,7 @@ class Ruby < Formula
         alias :old_default_dir :default_dir
         alias :old_default_path :default_path
         alias :old_default_bindir :default_bindir
+        alias :old_ruby :ruby
       end
 
       def self.default_dir
@@ -136,6 +138,10 @@ class Ruby < Formula
 
       def self.default_bindir
         "#{HOMEBREW_PREFIX}/bin"
+      end
+
+      def self.ruby
+        "#{opt_bin}/ruby#{"22" if build.with? "suffix"}"
       end
     end
     EOS

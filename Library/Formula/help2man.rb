@@ -1,16 +1,15 @@
-require "formula"
-
 class Help2man < Formula
-  homepage "http://www.gnu.org/software/help2man/"
-  url "http://ftpmirror.gnu.org/help2man/help2man-1.46.4.tar.xz"
-  mirror "http://ftp.gnu.org/gnu/help2man/help2man-1.46.4.tar.xz"
-  sha256 "1ae7f15f53b0cc55b070ae49df2ee5caa942c71529054e157599427bba3c5633"
+  desc "Automatically generate simple man pages"
+  homepage "https://www.gnu.org/software/help2man/"
+  url "http://ftpmirror.gnu.org/help2man/help2man-1.47.1.tar.xz"
+  mirror "https://ftp.gnu.org/gnu/help2man/help2man-1.47.1.tar.xz"
+  sha256 "c59b26f60cb06e45b00e729dea721e7a17220e2c17d800eb428271a750382b06"
 
   bottle do
     cellar :any
-    sha1 "6ba98c8f097531912e58863dee1247cb02f9c289" => :yosemite
-    sha1 "747eadb45bf3bbcd2e2fd58dac062495768dd912" => :mavericks
-    sha1 "134e606290c5c93f915c51fbe87a6ddaa352f1fd" => :mountain_lion
+    sha256 "40c09efa98f1d4a76aef58206a6e161b21f2d34e86959f1272f785a68c3f7734" => :yosemite
+    sha256 "c0fd556bfa0a791590d4233c1856e492605a9078735789927dd1c2ec0653e6c2" => :mavericks
+    sha256 "bc3d57b4a32e616fbc8d7da3610441a710a7eb6f855b839de0e7a1b91e1cb712" => :mountain_lion
   end
 
   def install
@@ -19,6 +18,11 @@ class Help2man < Formula
     ENV.j1
 
     system "./configure", "--prefix=#{prefix}"
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    cmd = "#{bin}/help2man #{bin}/help2man"
+    assert_match(/"help2man #{version}"/, shell_output(cmd))
   end
 end

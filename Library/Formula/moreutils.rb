@@ -1,16 +1,13 @@
-require 'formula'
-
 class Moreutils < Formula
-  homepage 'http://joeyh.name/code/moreutils/'
-  url 'http://mirrors.kernel.org/debian/pool/main/m/moreutils/moreutils_0.52.tar.gz'
-  mirror 'http://ftp.us.debian.org/debian/pool/main/m/moreutils/moreutils_0.52.tar.gz'
-  sha1 '32047f935178b490a12c370d8f695f1273dc5895'
+  desc "Collection of tools that nobody wrote when UNIX was young"
+  homepage "https://joeyh.name/code/moreutils/"
+  url "https://distfiles.macports.org/moreutils/moreutils_0.55.orig.tar.gz"
+  sha256 "da9d5cd145ceea967a65dd50031d168d66199c3eb41b9390b57f35d4a5808ab5"
 
   bottle do
-    revision 2
-    sha1 "09c41223be308962ffb8014fdbcedba9c9288a8c" => :yosemite
-    sha1 "07383e8aa340c226800d36fb0d2107073c05392d" => :mavericks
-    sha1 "7ed2b97a47512e47e7a74ee11ebf8b3cc5d1697e" => :mountain_lion
+    sha1 "a7d3974c453e9b68d0254505f5bb4ed9fa9ba3a3" => :yosemite
+    sha1 "314304205f3f69f2a885524ea327ddb887be43d9" => :mavericks
+    sha1 "47ac9f9d22e0890e9df62e602ecf7a70a378826f" => :mountain_lion
   end
 
   depends_on "docbook-xsl" => :build
@@ -22,19 +19,19 @@ class Moreutils < Formula
       :because => "both install a 'parallel' executable. See the '--without-parallel' option"
   end
 
-  conflicts_with 'task-spooler',
+  conflicts_with "task-spooler",
     :because => "both install a 'ts' executable."
 
   resource "Time::Duration" do
     url "http://search.cpan.org/CPAN/authors/id/A/AV/AVIF/Time-Duration-1.1.tar.gz"
-    mirror "http://search.mcpan.org/CPAN/authors/id/A/AV/AVIF/Time-Duration-1.1.tar.gz"
-    sha1 "5acc5013d8b4ab52416555e1f08546a8d8a3fb41"
+    mirror "https://cpan.metacpan.org/authors/id/A/AV/AVIF/Time-Duration-1.1.tar.gz"
+    sha256 "a69c419c4892f21eba10002e2ab8c55b657b6691cf6873544ef99ef5fd188f4e"
   end
 
   resource "IPC::Run" do
     url "http://search.cpan.org/CPAN/authors/id/T/TO/TODDR/IPC-Run-0.92.tar.gz"
-    mirror "http://search.mcpan.org/CPAN/authors/id/T/TO/TODDR/IPC-Run-0.92.tar.gz"
-    sha1 "87e0c796722a85e0908bb0224326af1436d35809"
+    mirror "https://cpan.metacpan.org/authors/id/T/TO/TODDR/IPC-Run-0.92.tar.gz"
+    sha256 "e186b46ddf1577d24f11eec1ba42285963c3f71ec7ecb1ce51d6e88c729d46d2"
   end
 
   def install
@@ -61,5 +58,10 @@ class Moreutils < Formula
     system "make", "check"
     system "make", "install", "PREFIX=#{prefix}"
     bin.env_script_all_files(libexec+"bin", :PERL5LIB => ENV["PERL5LIB"])
+  end
+
+  test do
+    pipe_output("#{bin}/isutf8", "hello", 0)
+    pipe_output("#{bin}/isutf8", "\xca\xc0\xbd\xe7", 1)
   end
 end

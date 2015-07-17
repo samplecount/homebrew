@@ -1,16 +1,15 @@
-require "formula"
-
 class Ejabberd < Formula
-  homepage "http://www.ejabberd.im"
-  url "https://www.process-one.net/downloads/ejabberd/14.12/ejabberd-14.12.tgz"
-  sha1 "baf944fb15a31ea19a3bc6da685bbc0e7c0daeff"
+  desc "XMPP application server"
+  homepage "https://www.ejabberd.im"
+  url "https://www.process-one.net/downloads/ejabberd/15.06/ejabberd-15.06.tgz"
+  sha256 "fcc001d0f2fc8b99bb2a4e7a42ec02c3c5d62191ea2aae19636f88e4e08be3a8"
 
-  head 'https://github.com/processone/ejabberd.git'
+  head "https://github.com/processone/ejabberd.git"
 
   bottle do
-    sha1 "cdaca13e8fd41e5defc1290ab74d05a705886394" => :yosemite
-    sha1 "d92a0d0d6597da5417535fa68b10a6d5a5e6a129" => :mavericks
-    sha1 "dd4c7c56445788d9cd93151609c4a027409d2c58" => :mountain_lion
+    sha256 "e33ffb53e8872eedb596cf957bff8a5a2da978030e8f16ed0a9356c9a0673734" => :yosemite
+    sha256 "966402cea51d6537cf718cb0dc62fa3bde5f3aa93b25cad1df09335fe36282b2" => :mavericks
+    sha256 "195288bb1ae8f59c29cd57386de6835bd6d67bab2fa7564d19d1c5eff543a5da" => :mountain_lion
   end
 
   option "32-bit"
@@ -25,11 +24,9 @@ class Ejabberd < Formula
     ENV["TARGET_DIR"] = ENV["DESTDIR"] = "#{lib}/ejabberd/erlang/lib/ejabberd-#{version}"
     ENV["MAN_DIR"] = man
     ENV["SBIN_DIR"] = sbin
-    # Homebrew's 'C compiler cannot create executables' bug workaround
-    ENV["HOMEBREW_ARCHFLAGS"] = " "
 
     if build.build_32_bit?
-      ENV.append %w{CFLAGS LDFLAGS}, "-arch #{Hardware::CPU.arch_32_bit}"
+      ENV.append %w[CFLAGS LDFLAGS], "-arch #{Hardware::CPU.arch_32_bit}"
     end
 
     args = ["--prefix=#{prefix}",
@@ -63,6 +60,11 @@ class Ejabberd < Formula
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <plist version="1.0">
     <dict>
+      <key>EnvironmentVariables</key>
+      <dict>
+        <key>HOME</key>
+        <string>#{var}/lib/ejabberd</string>
+      </dict>
       <key>Label</key>
       <string>#{plist_name}</string>
       <key>ProgramArguments</key>
@@ -72,9 +74,10 @@ class Ejabberd < Formula
       </array>
       <key>RunAtLoad</key>
       <true/>
+      <key>WorkingDirectory</key>
+      <string>#{var}/lib/ejabberd</string>
     </dict>
     </plist>
     EOS
   end
-
 end

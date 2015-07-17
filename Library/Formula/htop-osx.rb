@@ -1,15 +1,13 @@
-require 'formula'
-
 class HtopOsx < Formula
-  homepage 'https://github.com/max-horvath/htop-osx'
-  url 'https://github.com/max-horvath/htop-osx/archive/0.8.2.2.tar.gz'
-  sha1 '17c56fe5efe81cf6b0f4c13a958fa7e4d8591b23'
+  desc "Improved top (interactive process viewer) for OS X"
+  homepage "https://github.com/max-horvath/htop-osx"
+  url "https://github.com/max-horvath/htop-osx/archive/0.8.2.7.tar.gz"
+  sha256 "a93be5c9d8a68081590b1646a0f10fb90e966e306560c3b141a61b3849446b72"
 
   bottle do
-    revision 1
-    sha1 "846c2f8b7711960139af43f407d23f058825ca8f" => :yosemite
-    sha1 "3c6b4366aae7b1dad12275a66c4fa68e2c0312b7" => :mavericks
-    sha1 "3736ab4a1ac5cc0c3593e882a51d65a99ed359f0" => :mountain_lion
+    sha256 "c4f4c2be9f6bda38bef8e57570cb02ec2a60738b5e3e6b27c189e493582daf66" => :yosemite
+    sha256 "1e3fa7862bfcef0eed646b7c2b7f1d3ec491404b2c9312ae1045bb78b8059f30" => :mavericks
+    sha256 "611c4ee686babb880828510fd3b1cfa247aa1e0ba6cb60401e8ad5c6cac1fc75" => :mountain_lion
   end
 
   depends_on "autoconf" => :build
@@ -27,12 +25,14 @@ class HtopOsx < Formula
 
   def caveats; <<-EOS.undent
     htop-osx requires root privileges to correctly display all running processes.
-    You can either run the program via `sudo` or set the setuid bit:
-
-      sudo chown root:wheel #{bin}/htop
-      sudo chmod u+s #{bin}/htop
-
+    so you will need to run `sudo htop`.
     You should be certain that you trust any software you grant root privileges.
     EOS
+  end
+
+  test do
+    ENV["TERM"] = "xterm"
+    pipe_output("#{bin}/htop", "q")
+    assert $?.success?
   end
 end
